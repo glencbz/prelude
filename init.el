@@ -143,6 +143,10 @@ by Prelude.")
 
 ;; convenience remaps
 (global-set-key "\C-xk" 'kill-this-buffer)
+(global-set-key "\C-x\C-f" 'helm-find-files)
+
+;; replacements
+(global-set-key "\C-c4" 'ffap)
 (global-set-key "\M-x" 'helm-M-x)
 
 ;;(global-linum-mode t)
@@ -163,15 +167,17 @@ by Prelude.")
 (setq key-chord-two-keys-delay 0.5) ;;set remaps to go to normal
 (key-chord-define evil-insert-state-map "jk" 'evil-normal-state)
 (key-chord-mode 1)
+;; evil-nerd-commentor
+(evilnc-default-hotkeys)
 
 ;; recent files
 (require 'recentf)
 (recentf-mode 1)
 (setq recentf-max-menu-items 25)
-(global-set-key "\C-x\ \C-r" 'recentf-open-files)
+(global-set-key "\C-x\ \C-r" 'helm-recentf)
 
 ;; neotree
-(add-to-list 'load-path "/some/path/neotree")
+;; (add-to-list 'load-path "/some/path/neotree")
 (require 'neotree)
 (global-set-key [f8] 'neotree-toggle)
 ;; evil-mode remaps for neotree
