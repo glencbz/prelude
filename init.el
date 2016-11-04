@@ -141,6 +141,8 @@ by Prelude.")
 
 ;;; init.el ends here
 
+(desktop-save-mode 1)
+
 ;; convenience remaps
 (global-set-key "\C-xk" 'kill-this-buffer)
 (global-set-key "\C-x\C-f" 'helm-find-files)
@@ -149,14 +151,39 @@ by Prelude.")
 (global-set-key "\C-c4" 'ffap)
 (global-set-key "\M-x" 'helm-M-x)
 
+;; helm
+;; return opens files in find-files
+(require 'helm)
+(defun fu/helm-find-files-navigate-forward (orig-fun &rest args)
+  (if (file-directory-p (helm-get-selection))
+      (apply orig-fun args)
+    (helm-maybe-exit-minibuffer)))
+(advice-add 'helm-execute-persistent-action :around #'fu/helm-find-files-navigate-forward)
+(define-key helm-find-files-map (kbd "RET") 'helm-execute-persistent-action)
+;; backspace deletes whole directory in find-files
+(defun fu/helm-find-files-navigate-back (orig-fun &rest args)
+  (if (= (length helm-pattern) (length (helm-find-files-initial-input)))
+      (helm-find-files-up-one-level 1)
+    (apply orig-fun args)))
+(advice-add 'helm-ff-delete-char-backward :around #'fu/helm-find-files-navigate-back)
+
 ;;(global-linum-mode t)
-(setq linum-format "%d ")
+;; (setq linum-format "%d |")
+(defun linum-format-func (line)
+  (let ((w (length (number-to-string (count-lines (point-min) (point-max))))))
+    (propertize (format (format "%%%dd| " w) line) 'face 'linum)))
+(setq linum-format 'linum-format-func)
 
 ;; web-mode
 (require 'web-mode)
 (add-to-list 'auto-mode-alist '("\\.erb\\'" . web-mode))
 (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
-
+(setq web-mode-code-indent-offset 2)
+(setq web-mode-markup-indent-offset 2)
+(setq web-mode-css-indent-offset 2)
+(add-hook 'web-mode-hook
+    (function (lambda ()
+        (setq evil-shift-width 2))))
 ;; emmet-mode
 (add-hook 'web-mode-hook 'emmet-mode) ;; Auto-start on web-mode
 
@@ -166,15 +193,27 @@ by Prelude.")
 (global-set-key "\C-c3" 'evil-mode)
 (setq key-chord-two-keys-delay 0.5) ;;set remaps to go to normal
 (key-chord-define evil-insert-state-map "jk" 'evil-normal-state)
+(key-chord-define evil-visual-state-map "jk" 'evil-normal-state)
 (key-chord-mode 1)
+;; evil-surround
+(require 'evil-surround)
+(global-evil-surround-mode 1)
+(add-hook 'web-mode-hook (lambda ()
+                           (push '(?% . ("<% " . " %>")) evil-surround-pairs-alist)))
 ;; evil-nerd-commentor
 (evilnc-default-hotkeys)
+;; multiple-cursors in evil-mode
+(define-key evil-visual-state-map (kbd "C-n") 'mc/mark-next-like-this)
+(define-key evil-visual-state-map (kbd "C-p") 'mc/mark-previous-like-this)
+;; evil-matchit for html
+(require 'evil-matchit)
+(global-evil-matchit-mode 1)
 
 ;; recent files
 (require 'recentf)
 (recentf-mode 1)
 (setq recentf-max-menu-items 25)
-(global-set-key "\C-x\ \C-r" 'helm-recentf)
+(global-set-key "\C-x\C-r" 'helm-recentf)
 
 ;; neotree
 ;; (add-to-list 'load-path "/some/path/neotree")
@@ -185,3 +224,26 @@ by Prelude.")
 (evil-define-key 'normal neotree-mode-map (kbd "SPC") 'neotree-enter)
 (evil-define-key 'normal neotree-mode-map (kbd "q") 'neotree-hide)
 (evil-define-key 'normal neotree-mode-map (kbd "RET") 'neotree-enter)
+
+;; markdown-opening
+(setq markdown-open-command "/Users/glen/typo.sh")
+
+;; powerline
+;; (require 'powerline)
+;; (require 'powerline-evil)
+;; (powerline-evil-center-color-theme)
+
+;; (setq sml/theme 'powerline)
+;; (setq ns-use-srgb-colorspace nil)
+;; (sml/setup)
+
+;; spaceline
+(require 'spaceline-config)
+(spaceline-spacemacs-theme)
+(spaceline-toggle-minor-modes-off)
+(spaceline-toggle-buffer-encoding-off)
+
+;; projectile-rails fix
+(projectile-rails-global-mode)
+;; (global-unset-key "\C-cr")
+;; (global-set-key "\C-cr" 'escape)
