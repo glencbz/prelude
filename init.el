@@ -141,15 +141,52 @@ by Prelude.")
 
 ;;; init.el ends here
 
-(desktop-save-mode 1)
+;; prelude-mode
+(require 'prelude-mode)
+(global-set-key ( kbd "ESC <up>" ) 'move-text-up)
+(global-set-key ( kbd "ESC <down>" ) 'move-text-down)
 
 ;; convenience remaps
 (global-set-key "\C-xk" 'kill-this-buffer)
 (global-set-key "\C-x\C-f" 'helm-find-files)
+(global-set-key "\C-c2" 'linum-mode)
 
 ;; replacements
 (global-set-key "\C-c4" 'ffap)
 (global-set-key "\M-x" 'helm-M-x)
+
+;; evil-mode
+(require 'evil)
+(add-hook 'text-mode-hook 'evil-mode)
+(global-set-key "\C-c3" 'evil-mode)
+(evil-vimish-fold-mode 1)
+(setq evil-shift-width 2)
+(define-key evil-visual-state-map (kbd "C-g") 'evil-normal-state)
+(define-key evil-insert-state-map (kbd "C-g") 'evil-normal-state)
+;; (setq key-chord-two-keys-delay 0.2) ;;set remaps to go to normal
+;; (key-chord-define evil-insert-state-map "jk" 'evil-normal-state)
+;; (key-chord-define evil-visual-state-map "jk" 'evil-normal-state)
+;; (key-chord-define evil-motion-state-map "jk" 'evil-normal-state)
+;; (key-chord-define evil-replace-state-map"jk" 'evil-normal-state)
+;; (key-chord-define evil-operator-state-map "jk" 'evil-normal-state)
+;; (key-chord-mode 1)
+;; evil-surround
+(require 'evil-surround)
+(global-evil-surround-mode 1)
+(add-hook 'web-mode-hook (lambda ()
+                           (push '(?% . ("<% " . " %>")) evil-surround-pairs-alist)))
+(add-hook 'web-mode-hook (lambda ()
+                           (push '(?= . ("<%= " . " %>")) evil-surround-pairs-alist)))
+;; evil-nerd-commentor
+(evilnc-default-hotkeys)
+;; multiple-cursors in evil-mode
+(define-key evil-visual-state-map (kbd "C-n") 'mc/mark-next-like-this)
+(define-key evil-visual-state-map (kbd "C-p") 'mc/mark-previous-like-this)
+;; evil-matchit for html
+(require 'evil-matchit)
+(global-evil-matchit-mode 1)
+(evilem-default-keybindings "SPC")
+(setq evil-shift-width 2)
 
 ;; helm
 ;; return opens files in find-files
@@ -167,7 +204,9 @@ by Prelude.")
     (apply orig-fun args)))
 (advice-add 'helm-ff-delete-char-backward :around #'fu/helm-find-files-navigate-back)
 
-;;(global-linum-mode t)
+;; (global-linum-mode t)
+;; (add-hook 'text-mode-hook 'linum-mode)
+(add-hook 'find-file-hook (lambda () (linum-mode 1)))
 ;; (setq linum-format "%d |")
 (defun linum-format-func (line)
   (let ((w (length (number-to-string (count-lines (point-min) (point-max))))))
@@ -185,29 +224,24 @@ by Prelude.")
     (function (lambda ()
         (setq evil-shift-width 2))))
 ;; emmet-mode
+(require 'emmet-mode)
 (add-hook 'web-mode-hook 'emmet-mode) ;; Auto-start on web-mode
+(define-key emmet-mode-keymap "\C-j" nil)
+(puthash "er" "er" emmet-tag-snippets-table)
+(puthash "pe" "pe" emmet-tag-snippets-table)
 
-;; evil-mode
-(require 'evil)
-(add-hook 'text-mode-hook 'evil-mode)
-(global-set-key "\C-c3" 'evil-mode)
-(setq key-chord-two-keys-delay 0.5) ;;set remaps to go to normal
-(key-chord-define evil-insert-state-map "jk" 'evil-normal-state)
-(key-chord-define evil-visual-state-map "jk" 'evil-normal-state)
-(key-chord-mode 1)
-;; evil-surround
-(require 'evil-surround)
-(global-evil-surround-mode 1)
-(add-hook 'web-mode-hook (lambda ()
-                           (push '(?% . ("<% " . " %>")) evil-surround-pairs-alist)))
-;; evil-nerd-commentor
-(evilnc-default-hotkeys)
-;; multiple-cursors in evil-mode
-(define-key evil-visual-state-map (kbd "C-n") 'mc/mark-next-like-this)
-(define-key evil-visual-state-map (kbd "C-p") 'mc/mark-previous-like-this)
-;; evil-matchit for html
-(require 'evil-matchit)
-(global-evil-matchit-mode 1)
+;; yasnippet
+(global-unset-key "\C-c\C-v")
+(require 'yasnippet)
+(yas-global-mode 1)
+(setq hippie-expand-try-functions-list '(yas/hippie-try-expand
+                                         emmet-expand-line
+                                         hippie-expand-try-functions-list))
+(define-key yas-minor-mode-map (kbd "TAB") nil)
+(define-key yas-minor-mode-map (kbd "<tab>") nil)
+(global-set-key "\C-j" 'hippie-expand)
+(global-set-key (kbd "\C-k") 'helm-dabbrev)
+(define-key evil-insert-state-map (kbd "\C-k") 'helm-dabbrev)
 
 ;; recent files
 (require 'recentf)
@@ -247,3 +281,27 @@ by Prelude.")
 (projectile-rails-global-mode)
 ;; (global-unset-key "\C-cr")
 ;; (global-set-key "\C-cr" 'escape)
+
+;; typescript-tide
+(defun setup-tide-mode ()
+  (interactive)
+  (tide-setup)
+  (flycheck-mode +1)
+  (setq flycheck-check-syntax-automatically '(save mode-enabled))
+  (eldoc-mode +1)
+  (tide-hl-identifier-mode +1))
+;; aligns annotation to the right hand side
+(setq company-tooltip-align-annotations t)
+;; formats the buffer before saving
+(add-hook 'before-save-hook 'tide-format-before-save)
+(add-hook 'typescript-mode-hook #'setup-tide-mode)
+;; format options
+(setq tide-format-options '(:insertSpaceAfterFunctionKeywordForAnonymousFunctions t :placeOpenBraceOnNewLineForFunctions nil))
+(setq typescript-indent-level 2
+      typescript-expr-indent-offset 2)
+
+;; company delay
+(require 'company
+  :config (setq company-idle-delay 0.1))
+
+(desktop-save-mode 1)

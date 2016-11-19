@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: erb code block
+# key: er
+# --
+<% $0 %>

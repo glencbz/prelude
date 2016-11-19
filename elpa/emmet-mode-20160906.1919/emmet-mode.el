@@ -1380,6 +1380,8 @@ tbl) tbl)
 tbl) tbl)
 tbl) tbl)
 tbl))
+
+
 ;; src/preferences.el
 ;; This file is generated from conf/preferences.json
 ;; Don't edit.
@@ -3984,7 +3986,7 @@ tbl))
   (emmet-join-string
    (mapcar
     #'(lambda (expr)
-        (let* 
+        (let*
 	    ((hash-map (if emmet-use-sass-syntax emmet-sass-snippets emmet-css-snippets))
 	     (basement
 	      (emmet-aif
